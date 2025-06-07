@@ -1,0 +1,14 @@
+flask
+flask-sqlalchemy
+flask-jwt-extended
+psycopg2-binary
+bcrypt
+cryptography
+flask-limiter
+flask-cors
+flask-wtf
+pyotp
+qrcode
+redis
+celery
+pillow
