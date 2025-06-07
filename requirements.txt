@@ -1,0 +1,17 @@
+phe
+secretsharing
+pytest
+pytest-cov
+uvicorn[standard]
+fastapi
+fastapi-users[sqlalchemy2,argon2]
+sqlalchemy
+asyncpg
+email-validator
+sendgrid
+pyotp
+qrcode
+pillow
+python-multipart
+aiosqlite
+alembic

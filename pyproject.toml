@@ -1,0 +1,13 @@
+[project]
+name = "cybersec_project"
+version = "0.1.0"
+description = "CyberSecurity Project"
+authors = [{ name = "Niklas Hasenkopf" }, { name = "Luigj Lazri"}, { name = "Mirco Franco"}]
+dependencies = []
+
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages=["app"]
