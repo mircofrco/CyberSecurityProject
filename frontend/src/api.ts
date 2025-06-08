@@ -51,4 +51,39 @@ export const api = {
 
     return response.json();
   },
+
+  // MFA Functions
+  async setupMFA(token: string): Promise<{ otpauth_url: string; qr: string }> {
+    const response = await fetch(`${API_BASE}/mfa/setup`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.detail || 'MFA setup failed');
+    }
+
+    return response.json();
+  },
+
+  async verifyMFA(token: string, code: string): Promise<{ detail: string }> {
+    const response = await fetch(`${API_BASE}/mfa/verify`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ code }),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.detail || 'MFA verification failed');
+    }
+
+    return response.json();
+  },
 };

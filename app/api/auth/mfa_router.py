@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status
+from pydantic import BaseModel
 import pyotp, qrcode, io, base64
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -8,10 +9,15 @@ from app.api.auth.models import User
 router = APIRouter(prefix="/mfa", tags=["mfa"])
 
 
+# Add this Pydantic model for JSON request body
+class MFAVerifyRequest(BaseModel):
+    code: str
+
+
 @router.post("/setup")
 async def mfa_setup(
-    user: User = Depends(current_active_user),
-    session: AsyncSession = Depends(get_async_session),
+        user: User = Depends(current_active_user),
+        session: AsyncSession = Depends(get_async_session),
 ):
     """Generate or return existing TOTP secret as a data-URI QR code."""
     if not user.mfa_secret:
@@ -30,10 +36,30 @@ async def mfa_setup(
     return {"otpauth_url": uri, "qr": f"data:image/png;base64,{qr_b64}"}
 
 
+# FIXED VERSION - accepts JSON body with Pydantic model
 @router.post("/verify")
-async def mfa_verify(code: str, user: User = Depends(current_active_user)):
+async def mfa_verify(
+        request: MFAVerifyRequest,  # This accepts {"code": "123456"}
+        user: User = Depends(current_active_user)
+):
+    """Verify TOTP code from user's authenticator app."""
     if not user.mfa_secret:
-        raise HTTPException(status.HTTP_400_BAD_REQUEST, "MFA not enabled")
-    if not pyotp.TOTP(user.mfa_secret).verify(code):
-        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Invalid TOTP")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="MFA not enabled"
+        )
+
+    # Use request.code instead of just code
+    if not pyotp.TOTP(user.mfa_secret).verify(request.code):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid TOTP"
+        )
+
     return {"detail": "MFA verified"}
+
+# Alternative version if your current code looks different:
+# @router.post("/verify")
+# async def mfa_verify(code: str, user: User = Depends(current_active_user)):
+#     # This expects code as query parameter: POST /mfa/verify?code=123456
+#     # NOT as JSON body

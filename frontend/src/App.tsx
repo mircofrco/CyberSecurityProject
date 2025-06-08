@@ -51,6 +51,18 @@ function App() {
     setError('');
   };
 
+  const handleUserUpdate = async () => {
+    // Refresh user data (e.g., after MFA is enabled)
+    if (token) {
+      try {
+        const userData = await api.getCurrentUser(token);
+        setUser(userData);
+      } catch (err) {
+        console.error('Failed to refresh user data:', err);
+      }
+    }
+  };
+
   if (loading) {
     return (
       <div className="container">
@@ -68,8 +80,13 @@ function App() {
 
       {error && <div className="error">{error}</div>}
 
-      {isAuthenticated && user ? (
-        <UserInfo user={user} onLogout={handleLogout} />
+      {isAuthenticated && user && token ? (
+        <UserInfo
+          user={user}
+          token={token}
+          onLogout={handleLogout}
+          onUserUpdate={handleUserUpdate}
+        />
       ) : (
         <>
           {showLogin ? (
