@@ -1,35 +1,91 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { useState, useEffect } from 'react';
+import { Login } from './components/Login';
+import { Register } from './components/Register';
+import { UserInfo } from './components/UserInfo';
+import { api } from './api';
+import type {User} from './types';
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
+  const [token, setToken] = useState<string | null>(null);
+  const [showLogin, setShowLogin] = useState(true);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  // Check for existing token on app load
+  useEffect(() => {
+    const savedToken = localStorage.getItem('securevote_token');
+    if (savedToken) {
+      validateToken(savedToken);
+    } else {
+      setLoading(false);
+    }
+  }, []);
+
+  const validateToken = async (token: string) => {
+    try {
+      const userData = await api.getCurrentUser(token);
+      setUser(userData);
+      setToken(token);
+      setIsAuthenticated(true);
+    } catch (err) {
+      localStorage.removeItem('securevote_token');
+      setError('Session expired. Please login again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleLogin = async (token: string) => {
+    localStorage.setItem('securevote_token', token);
+    await validateToken(token);
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('securevote_token');
+    setIsAuthenticated(false);
+    setUser(null);
+    setToken(null);
+    setShowLogin(true);
+    setError('');
+  };
+
+  if (loading) {
+    return (
+      <div className="container">
+        <div className="loading">Loading...</div>
+      </div>
+    );
+  }
 
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    <div className="container">
+      <header>
+        <h1>SecureVote</h1>
+        <p>Cryptographically Secure Voting System</p>
+      </header>
+
+      {error && <div className="error">{error}</div>}
+
+      {isAuthenticated && user ? (
+        <UserInfo user={user} onLogout={handleLogout} />
+      ) : (
+        <>
+          {showLogin ? (
+            <Login
+              onLogin={handleLogin}
+              onSwitchToRegister={() => setShowLogin(false)}
+            />
+          ) : (
+            <Register
+              onSwitchToLogin={() => setShowLogin(true)}
+            />
+          )}
+        </>
+      )}
+    </div>
+  );
 }
 
-export default App
+export default App;
