@@ -86,4 +86,71 @@ export const api = {
 
     return response.json();
   },
+
+  // Voting Functions
+  async getElections(token: string): Promise<Election[]> {
+    const response = await fetch(`${API_BASE}/voting/elections`, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.detail || 'Failed to fetch elections');
+    }
+
+    return response.json();
+  },
+
+  async getVoterStatus(token: string, electionId: string): Promise<VoterStatus> {
+    const response = await fetch(`${API_BASE}/voting/elections/${electionId}/status`, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.detail || 'Failed to check voter status');
+    }
+
+    return response.json();
+  },
+
+  async castVote(token: string, electionId: string, candidateId: string, mfaCode: string): Promise<VoteResponse> {
+    const response = await fetch(`${API_BASE}/voting/elections/${electionId}/vote`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        candidate_id: candidateId,
+        mfa_code: mfaCode,
+      }),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.detail || 'Failed to cast vote');
+    }
+
+    return response.json();
+  },
+
+  async getElectionResults(token: string, electionId: string): Promise<ElectionResults> {
+    const response = await fetch(`${API_BASE}/voting/elections/${electionId}/results`, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.detail || 'Failed to fetch election results');
+    }
+
+    return response.json();
+  },
 };
