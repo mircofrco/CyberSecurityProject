@@ -1,0 +1,6 @@
+README.md
+pyproject.toml
+cybersec_project.egg-info/PKG-INFO
+cybersec_project.egg-info/SOURCES.txt
+cybersec_project.egg-info/dependency_links.txt
+cybersec_project.egg-info/top_level.txt
