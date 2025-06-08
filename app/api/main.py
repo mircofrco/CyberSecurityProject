@@ -13,11 +13,10 @@ app.include_router(admin_router)
 
 @app.on_event("startup")
 async def on_startup():
-    # create DB tables once; replace with Alembic in prod
+    # create DB tables once;
     from app.database import Base, engine
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
-
 
 @app.get("/ping")
 async def ping():

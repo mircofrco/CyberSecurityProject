@@ -37,3 +37,11 @@ class User(SQLAlchemyBaseUserTableUUID, Base):
         lazy="selectin",
     )
 
+    def has_role(self, role_name: str) -> bool:
+        """Check if user has a specific role"""
+        return role_name in {role.name for role in self.roles}
+
+    @property
+    def mfa_enabled(self) -> bool:
+        """Check if multi-factor authentication is enabled"""
+        return self.mfa_secret is not None
