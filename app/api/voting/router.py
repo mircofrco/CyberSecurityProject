@@ -3,6 +3,7 @@ from typing import List
 from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
+from uuid import UUID
 import pyotp
 
 from app.database import get_async_session
@@ -18,28 +19,28 @@ from app.api.crypto.paillier_utils import encrypt_ballot, generate_keypair
 router = APIRouter(prefix="/voting", tags=["voting"])
 
 
+from sqlalchemy.orm import selectinload
+
 @router.get("/elections", response_model=List[ElectionRead])
 async def list_elections(
         session: AsyncSession = Depends(get_async_session),
         user: User = Depends(current_active_user)
 ):
     """Get list of all active elections"""
-    query = select(Election).where(Election.is_active == True)
+    query = (
+        select(Election)
+        .where(Election.is_active == True)
+        .options(selectinload(Election.candidates))
+    )
     result = await session.execute(query)
     elections = result.scalars().all()
-
-    # Load candidates for each election
-    for election in elections:
-        candidates_query = select(Candidate).where(Candidate.election_id == election.id)
-        candidates_result = await session.execute(candidates_query)
-        election.candidates = candidates_result.scalars().all()
-
     return elections
+
 
 
 @router.get("/elections/{election_id}/status", response_model=VoterStatusResponse)
 async def get_voter_status(
-        election_id: str,
+        election_id: UUID,
         session: AsyncSession = Depends(get_async_session),
         user: User = Depends(current_active_user)
 ):
@@ -107,7 +108,7 @@ async def get_voter_status(
 
 @router.post("/elections/{election_id}/vote", response_model=VoteResponse)
 async def cast_vote(
-        election_id: str,
+        election_id: UUID,
         vote_request: VoteConfirmationRequest,
         request: Request,
         session: AsyncSession = Depends(get_async_session),
@@ -189,7 +190,7 @@ async def cast_vote(
 
 @router.get("/elections/{election_id}/results", response_model=ElectionResultsResponse)
 async def get_election_results(
-        election_id: str,
+        election_id: UUID,
         session: AsyncSession = Depends(get_async_session),
         user: User = Depends(current_active_user)
 ):
